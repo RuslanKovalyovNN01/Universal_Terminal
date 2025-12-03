@@ -20,38 +20,49 @@ namespace Terminal_v0._0
             InitializeComponent();
         }
 
-        private void StartButton_Click(object sender, EventArgs e)
+        private async void StartButton_Click(object sender, EventArgs e)
         {
-            Thread thread = new Thread(() =>
+            int count = 10000;      // всего точек
+            int batch = 100;        // количество точек, добавляемых за один раз
+            double[] data = new double[batch];
+            int currentIndex = 0;
+
+            // очищаем график
+            chart1.Series[0].Points.Clear();
+
+            for (int i = 0; i < count; i++)
             {
-                int count = 10000;
-                int batch = 50;
-                double[] data = new double[batch];
-                int currentIndex = 0;
-                chart1.Invoke((Action)(() => chart1.Series[0].Points.Clear()));
-                for(int i = 0; i<count; i++)
+                double y = Math.Sin(i * 0.01); // пример данных
+                data[currentIndex++] = y;
+
+                if (currentIndex == batch || i == count - 1)
                 {
-                    double y = Math.Sin(i * 0.01);
-                    data[currentIndex++] = y;
-                    if(currentIndex == batch || i == count -1)
+                    int start = i - currentIndex + 1;
+
+                    // добавляем пакет точек
+                    for (int j = 0; j < currentIndex; j++)
                     {
-                        int start = i - currentIndex + 1;
-                        var points = data.Take(currentIndex).Select((v, idx) => new DataPoint(start + idx, v)).ToArray();
-                        chart1.Invoke((Action)(() =>
-                        {
-                            foreach (var p in points)
-                            {
-                                chart1.Series[0].Points.Add(p);
-                            }
-                            chart1.Invalidate();
-                        }));
-                        currentIndex = 0;
+                        chart1.Series[0].Points.AddXY(start + j, data[j]);
                     }
-                    Thread.Sleep(1);
+
+                    chart1.Invalidate(); // обновляем график
+
+                    currentIndex = 0;
+
+                    // небольшая пауза, чтобы UI успевал обновляться
+                    await Task.Delay(1);
                 }
-            });
-            thread.IsBackground = true;
-            thread.Start();
+            }
+        }
+
+        private void Form1_Load(object sender, EventArgs e)
+        {
+
+        }
+
+        private void ReadFileBtn_Click(object sender, EventArgs e)
+        {
+            OpenFileDialog openFileDialog = new OpenFileDialog();
         }
     }
 }
